@@ -1,0 +1,3 @@
+name = Drush module management
+description = Manage hard dependencies for modules
+core = 7.x

@@ -1,0 +1,16 @@
+local:
+  all:
+    views: 1
+  multisite1:
+    devel: 1
+    context: 1
+  multisite2:
+    views_ui: 1
+    devel: 0
+
+prod:
+  all:
+    devel: 0
+    maillog: 0
+  multisite1:
+    context: 1
