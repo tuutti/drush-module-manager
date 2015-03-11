@@ -22,7 +22,15 @@ function drush_module_management_get_modules($env = NULL) {
   $dependencies = &drupal_static(__FUNCTION__);
 
   if (!$dependencies) {
-    $dependencies = yaml_parse_file(__DIR__ . '/dependencies.yaml');
+    $module_path = drupaL_get_path('module', 'drush_module_management');
+    $file = $module_path . '/dependencies.json';
+
+    $handle = fopen($file, 'r');
+    $dependencies_json = fread($handle, filesize($file));
+    fclose($handle);
+
+    $dependencies = json_decode($dependencies_json, TRUE);
+
   }
   return !empty($dependencies[$env]) ? $dependencies[$env] : FALSE;
 }
@@ -36,7 +44,19 @@ function drush_drush_module_management() {
   if (empty($site)) {
     drupal_set_message('Failed to load site.');
   }
-  $env = variable_get('env', NULL);
+  
+  // Manage first global modules
+  drush_module_management_manage_modules('all');
+
+  // Manage modules per environment
+  drush_module_management_manage_modules(variable_get('env', NULL));
+
+}
+
+/**
+ * Update modules based on environment
+ */
+function drush_module_management_manage_modules($env) {
 
   if (!$env) {
     drupal_set_message('Environment not found.');
@@ -52,8 +72,8 @@ function drush_drush_module_management() {
   if (!empty($dependencies['all'])) {
     drush_module_management_change_module_state($dependencies['all']);
   }
-}
 
+}
 /**
  * Enable / disable modules based on state.
  */
