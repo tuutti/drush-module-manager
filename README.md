@@ -23,10 +23,10 @@ all: # <- Global modules
 ````yaml
 all: # <- Global modules
   views: 1
-local: # <- Environment specific modules
+local: # <- Local (environment) specific modules
   all:
     views_ui: 1
-prod: # <- Environment specific modules
+prod: # <- Prod (environment) specific modules
   all:
     devel: 0
     maillog: 0
@@ -36,13 +36,13 @@ prod: # <- Environment specific modules
 ````yaml
 all: # <- Global modules
   views: 1
-local: # <- Environment specific modules
+local: # <- Local (environment) specific modules
   all: # <- Modules that will be enabled on every (multi) site
     views_ui: 1
   multisite1: # <- Modules that will be enabled only on this site
     webform: 1 
     context: 1
-prod: # <- Environment specific modules
+prod: # <- Prod (environment) specific modules
   all: # <- Modules that will be enabled on every (multi) site
     devel: 0
     maillog: 0
@@ -52,3 +52,20 @@ prod: # <- Environment specific modules
 ````
 
 Site specific settings will always override environment and environment will always override global.
+
+### Capistrano example
+````ruby
+# List the Drupal multi-site folders. Use "default" if no multi-sites are installed.
+set :domains, ['default'] 
+````
+
+````ruby
+ desc 'Update module dependencies'
+  task :dmodm do
+    on release_roles :all do
+      fetch(:domains).each do |domain|
+      execute "#{fetch(:drush)} dmodm -y --uri=#{domain}"
+    end
+  end
+end
+````
