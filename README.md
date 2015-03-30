@@ -55,6 +55,8 @@ Site specific settings will always override environment and environment will alw
 
 ### Capistrano example
 ````ruby
+set :drush, "cd #{fetch(:app_path)} ; drush"
+
 # List the Drupal multi-site folders. Use "default" if no multi-sites are installed.
 set :domains, ['default'] 
 ````
