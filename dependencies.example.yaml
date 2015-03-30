@@ -1,11 +1,12 @@
+all:
+  views: 1
 local:
   all:
-    views: 1
+    views_ui: 1
   multisite1:
     devel: 1
     context: 1
   multisite2:
-    views_ui: 1
     devel: 0
 
 prod:

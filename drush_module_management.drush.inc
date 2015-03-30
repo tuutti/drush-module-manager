@@ -11,51 +11,115 @@ function drush_module_management_drush_command() {
   $items['drush-module-management'] = array(
     'description' => 'Manage hard dependencies',
     'aliases' => array('dmodm'),
+    'options' => array(
+      'yaml-file' => 'User provided dependencies.yaml',
+    ),
   );
   return $items;
 }
 
 /**
  * Get list of modules.
+ *
+ * @param string $yaml_file
+ *   Path to dependencie yaml file.
+ * @param string $env
+ *   Drupal environment variable
+ *
+ * @return array
+ *   List of modules for given environment.
+ *
+ * @todo Refactor.
  */
-function drush_module_management_get_modules($env = NULL) {
-  $dependencies = &drupal_static(__FUNCTION__);
+function drush_module_management_get_modules($yaml_file, $env = NULL) {
+  $dependencies = &drupal_static(__FUNCTION__ . $env);
 
-  if (!$dependencies) {
-    $dependencies = yaml_parse_file(__DIR__ . '/dependencies.yaml');
+  if (!file_exists($yaml_file)) {
+    drush_log('Dependencies file is missing.', 'error');
+    exit;
   }
-  return !empty($dependencies[$env]) ? $dependencies[$env] : FALSE;
+  if (!$dependencies) {
+    $dependencies = yaml_parse_file($yaml_file);
+  }
+  return !empty($dependencies[$env]) ? $dependencies[$env] : array();
 }
 
 /**
  * Callback for the drush-demo-command command.
+ *
+ * @todo Refactor.
  */
-function drush_drush_module_management() {
+function drush_drush_module_management($yaml_file = NULL) {
   $site = drush_get_context('DRUSH_DRUPAL_SITE');
 
+  if (!$yaml_file) {
+    drush_log('Dependencies file is missing', 'error');
+    exit;
+  }
+
+  if (basename($yaml_file) == $yaml_file) {
+    // User provided file without path. Try to load file from current folder.
+    $yaml_file = drupal_get_path('module', 'drush_module_management') . '/' . $yaml_file;
+  }
+  // Site should fallback to 'default'.
   if (empty($site)) {
-    drupal_set_message('Failed to load site.');
+    drush_log('Failed to load site.', 'error');
+    exit;
   }
   $env = variable_get('env', NULL);
 
-  if (!$env) {
-    drupal_set_message('Environment not found.');
-  }
+  $modules = drush_module_management_get_order($env, $site, $yaml_file);
 
-  $dependencies = drush_module_management_get_modules($env);
-
-  // Site spefic modules.
-  if (!empty($dependencies[$site])) {
-    drush_module_management_change_module_state($dependencies[$site]);
-  }
-  // Environment specific modules.
-  if (!empty($dependencies['all'])) {
-    drush_module_management_change_module_state($dependencies['all']);
-  }
+  drush_module_management_change_module_state($modules);
 }
 
 /**
- * Enable / disable modules based on state.
+ * Get given modules in proper order.
+ *
+ * @param string $env
+ *   Drupal environment variable.
+ * @param string $site
+ *   Drush site variable. Fallbacks to 'default'.
+ *
+ * @return array
+ *   Array of modules.
+ *
+ * @todo Refactor.
+ */
+function drush_module_management_get_order($env, $site, $yaml_file) {
+  $modules = array();
+  // Allow users to specify global modules under the 'all' environment.
+  foreach (drush_module_management_get_modules($yaml_file, 'all') as $module => $state) {
+    $modules[$module] = $state;
+  }
+  $dependencies = drush_module_management_get_modules($yaml_file, $env);
+
+  if (!empty($dependencies['all'])) {
+    // Allow environment to override global modules.
+    foreach ($dependencies['all'] as $module => $state) {
+      $modules[$module] = $state;
+    }
+  }
+
+  // Site spefic modules.
+  if (!empty($dependencies[$site])) {
+    // Allow site to override environment and global modules.
+    foreach ($dependencies[$site] as $module => $state) {
+      $modules[$module] = $state;
+    }
+  }
+  print_r($modules);
+
+  return $modules;
+}
+
+/**
+ * Enable / disable modules based on given state.
+ *
+ * @param array $list
+ *   List of modules to enable / disable.
+ *
+ * @todo Refactor.
  */
 function drush_module_management_change_module_state($list) {
   $modules = array();
@@ -66,6 +130,12 @@ function drush_module_management_change_module_state($list) {
       }
     }
     else {
+      if (!drupal_get_path('module', $module)) {
+        // Trying to enable module tha does not exists.
+        return drush_log(t('Trying to enable module that does not exists: @module', array(
+          '@module' => $module,
+        )), 'error');
+      }
       if (!module_exists($module)) {
         $modules['enable'][] = $module;
       }
@@ -93,5 +163,5 @@ function drush_module_management_module_output($modules, $state) {
     '@state' => empty($state) ? 'Disabled' : 'Enabled',
     '@modules' => implode(',', $modules),
   ));
-  drupal_set_message($string);
+  drush_log($string);
 }
