@@ -108,7 +108,6 @@ function drush_module_management_get_order($env, $site, $yaml_file) {
       $modules[$module] = $state;
     }
   }
-  print_r($modules);
 
   return $modules;
 }
