@@ -8,6 +8,7 @@ This can be used to enable/disable modules on different (multi)sites and environ
 Set `$conf['env']` to settings.php or via `variable_set('env', 'anything');` to use environment specific modules (optional)
 
 Run:
+- `drush dmodm` to use default dependencies.yaml file
 - `drush dmodm --yaml-file /absolute/path/to/your/module-dependencies.yaml` to use absolute path
 - `drush dmodm --yaml-file module-dependencies.yaml` to load from the module directory
 
