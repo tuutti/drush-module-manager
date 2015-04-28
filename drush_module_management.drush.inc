@@ -49,13 +49,8 @@ function drush_module_management_get_modules($yaml_file, $env = NULL) {
  *
  * @todo Refactor.
  */
-function drush_drush_module_management($yaml_file = NULL) {
+function drush_drush_module_management($yaml_file = 'dependencies.yaml') {
   $site = drush_get_context('DRUSH_DRUPAL_SITE');
-
-  if (!$yaml_file) {
-    drush_log('Dependencies file is missing', 'error');
-    exit;
-  }
 
   if (basename($yaml_file) == $yaml_file) {
     // User provided file without path. Try to load file from current folder.
