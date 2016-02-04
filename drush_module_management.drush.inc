@@ -4,6 +4,9 @@
  * Drush module management.
  */
 
+use Symfony\Component\Yaml\Parser;
+use Symfony\Component\Yaml\Exception\ParseException;
+
 /**
  * Implements hook_drush_command().
  */
@@ -16,6 +19,26 @@ function drush_module_management_drush_command() {
     ),
   );
   return $items;
+}
+
+/**
+ * Implements hook_libraries_info().
+ */
+function drush_module_management_libraries_info() {
+  $libraries['symfony-yaml'] = array(
+    'name' => 'Symfony YAML',
+    'vendor url' => 'https://github.com/symfony/yaml',
+    'download url' => 'https://github.com/symfony/yaml/releases',
+    'version arguments' => array(
+      'file' => 'CHANGELOG.md',
+      // pattern to search for: 3.0.0
+      'pattern' => '(\d*\.\d*\.\d*)@'
+    ),
+    'xautoload' => function($adapter) {
+      $adapter->add('Symfony\Component\Yaml', './');
+    },
+  );
+  return $libraries;
 }
 
 /**
@@ -39,7 +62,15 @@ function drush_module_management_get_modules($yaml_file, $env = NULL) {
     exit;
   }
   if (!$dependencies) {
-    $dependencies = yaml_parse_file($yaml_file);
+    $yaml = new Parser();
+
+    try {
+      $dependencies = $yaml->parse(file_get_contents($yaml_file));
+    }
+    catch (ParseException $e) {
+      drush_log('Parse failed.', 'error');
+      exit;
+    }
   }
   return !empty($dependencies[$env]) ? $dependencies[$env] : array();
 }
