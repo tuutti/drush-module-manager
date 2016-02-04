@@ -1,2 +1,4 @@
 name = Drush module management
 core = 7.x
+dependencies[] = libraries
+dependencies[] = xautoload

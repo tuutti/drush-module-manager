@@ -2,7 +2,15 @@ This can be used to enable/disable modules on different (multi)sites and environ
 
 ### Dependencies:
 - Drush
-- php-yaml (php5-yaml on Ubuntu/Debian)
+- xautoload
+- libraries
+- Symfony YAML component (https://github.com/symfony/yaml)
+- PHP >=5.5.9
+
+### Installation:
+The Symfony YAML component must be extracted to the libraries folder so that you have the following file locations:
+- sites/all/libraries/yaml/Parser.php
+- sites/all/libraries/yaml/README.md
 
 ### Usage:
 Set `$conf['env']` to settings.php or via `variable_set('env', 'anything');` to use environment specific modules (optional)
@@ -41,14 +49,14 @@ local: # <- Local (environment) specific modules
   all: # <- Modules that will be enabled on every (multi) site
     views_ui: 1
   multisite1: # <- Modules that will be enabled only on this site
-    webform: 1 
+    webform: 1
     context: 1
 prod: # <- Prod (environment) specific modules
   all: # <- Modules that will be enabled on every (multi) site
     devel: 0
     maillog: 0
   multisite1: # <- Modules that will be enabled only on this site
-    admin_menu: 1 
+    admin_menu: 1
     entity: 1
 ````
 
@@ -59,7 +67,7 @@ Site specific settings will always override environment and environment will alw
 set :drush, "cd #{fetch(:app_path)} ; drush"
 
 # List the Drupal multi-site folders. Use "default" if no multi-sites are installed.
-set :domains, ['default'] 
+set :domains, ['default']
 ````
 
 ````ruby
